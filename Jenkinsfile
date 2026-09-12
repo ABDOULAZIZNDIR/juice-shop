@@ -25,10 +25,15 @@ pipeline {
                 dependencyCheckPublisher pattern: 'dependency-check-report.xml'
             }
         }
+        stage('Secret Detection - Gitleaks') {
+            steps {
+                sh 'docker run --rm -v $(pwd):/repo zricethezav/gitleaks:latest detect --source="/repo" --report-path="/repo/gitleaks-report.json" --no-git || true'
+            }
+        }
     }
     post {
         always {
-            archiveArtifacts artifacts: '**/dependency-check-report.*, npm-audit-report.json', allowEmptyArchive: true
+            archiveArtifacts artifacts: '**/dependency-check-report.*, npm-audit-report.json, gitleaks-report.json', allowEmptyArchive: true
             publishHTML(target: [
                 reportDir: '.',
                 reportFiles: 'dependency-check-report.html',
@@ -38,7 +43,7 @@ pipeline {
                 subject: "Rapport de sécurité Juice Shop - Build #${env.BUILD_NUMBER}",
                 body: "Le scan de sécurité est terminé. Consultez le rapport joint ou dans Jenkins.",
                 to: 'azid.x69@gmail.com',
-                attachmentsPattern: 'dependency-check-report.html, npm-audit-report.json'
+                attachmentsPattern: 'dependency-check-report.html, npm-audit-report.json, gitleaks-report.json'
             )
         }
     }
