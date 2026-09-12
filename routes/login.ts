@@ -31,19 +31,22 @@ export function login () {
 
   return (req: Request, res: Response, next: NextFunction) => {
     verifyPreLoginChallenges(req) // vuln-code-snippet hide-line
-        models.sequelize.query(
-      'SELECT * FROM Users WHERE email = :email AND password = :password AND deletedAt IS NULL',
+            models.sequelize.query(
+      'SELECT * FROM Users WHERE email = :email AND deletedAt IS NULL',
       {
         replacements: {
-          email: req.body.email || '',
-          password: security.hash(req.body.password || '')
+          email: req.body.email || ''
         },
         model: UserModel,
         plain: true
       }
     )
-      .then((authenticatedUser) => { // vuln-code-snippet neutral-line loginAdminChallenge loginBenderChallenge loginJimChallenge
+      .then((authenticatedUser) => {
         const user = utils.queryResultToJson(authenticatedUser)
+        if (user.data?.id && !security.comparePassword(req.body.password || '', user.data.password)) {
+          res.status(401).send(res.__('Invalid email or password.'))
+          return
+        }
         if (user.data?.id && user.data.totpSecret !== '') {
           res.status(401).json({
             status: 'totp_token_required',

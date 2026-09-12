@@ -5,6 +5,7 @@
 
 import fs from 'node:fs'
 import crypto from 'node:crypto'
+import bcrypt from 'bcrypt'
 import { type Request, type Response, type NextFunction } from 'express'
 import { type UserModel } from '@juice-shop/models/user'
 import expressJwt from 'express-jwt'
@@ -39,6 +40,8 @@ interface IAuthenticatedUsers {
 }
 
 export const hash = (data: string) => crypto.createHash('md5').update(data).digest('hex')
+export const hashPassword = (password: string) => bcrypt.hashSync(password, 10)
+export const comparePassword = (password: string, hashedPassword: string) => bcrypt.compareSync(password, hashedPassword)
 export const hmac = (data: string) => crypto.createHmac('sha256', 'pa4qacea4VK9t9nGv7yZtwmj').update(data).digest('hex')
 
 export const cutOffPoisonNullByte = (str: string) => {
